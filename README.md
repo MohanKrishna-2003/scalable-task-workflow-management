@@ -115,3 +115,64 @@ Functional Requirements
     *   invalid user ID
         
     *   invalid status transitions
+ 
+  Non-Functional Requirements
+---------------------------
+
+### 1\. Scalability
+
+*   The system should support increasing numbers of users and tasks without major architectural changes.
+    
+*   The design should allow horizontal scaling in the future.
+    
+
+### 2\. Performance
+
+*   Task retrieval operations should be efficient (near constant time for ID lookup).
+    
+*   Filtering and sorting operations should remain performant for large task volumes.
+    
+*   The system should avoid unnecessary full data scans where possible.
+    
+
+### 3\. Maintainability
+
+*   The system shall follow SOLID principles.
+    
+*   The codebase should be modular and easily extensible.
+    
+*   New task types or workflow rules should be introduced with minimal modification to existing classes.
+    
+
+### 4\. Reliability
+
+*   The system should handle invalid operations gracefully.
+    
+*   Data consistency should be maintained during task assignment and status transitions.
+    
+
+### 5\. Concurrency Awareness (Future-Ready)
+
+*   The system design should consider concurrent task updates.
+    
+*   Race conditions should be preventable through proper design choices.
+    
+
+(for the time being we won't implement this as of now — but we will prepare for it.)
+
+### 6\. Extensibility
+
+*   The system architecture should allow:
+    
+    *   introduction of new workflow states
+        
+    *   new prioritization strategies
+        
+    *   additional task metadata
+        
+
+### 7\. Testability
+
+*   Core business logic should be independent of external frameworks.
+    
+*   Services should be testable in isolation.
