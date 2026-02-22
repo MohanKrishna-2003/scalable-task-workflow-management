@@ -176,3 +176,58 @@ Functional Requirements
 *   Core business logic should be independent of external frameworks.
     
 *   Services should be testable in isolation.
+
+System Scope
+------------
+
+### In Scope
+
+The system will:
+
+*   Provide backend services for managing tasks and workflows.
+    
+*   Support task creation, assignment, prioritization, and status transitions.
+    
+*   Allow retrieval and querying of tasks by multiple criteria.
+    
+*   Maintain clean separation between:
+    
+    *   domain logic
+        
+    *   service layer
+        
+    *   data storage abstractions
+        
+*   Be designed with scalability and extensibility in mind.
+    
+*   Use in-memory data storage for initial implementation.
+    
+*   Be implemented as a modular backend application.
+    
+
+🚫 OUT OF SCOPE (Explicitly)
+============================
+
+This is equally important.
+
+Out of Scope
+------------
+
+The system will not:
+
+*   Provide a frontend UI in Phase 1.
+    
+*   Implement authentication or role-based access control.
+    
+*   Persist data using databases in the initial version.
+    
+*   Handle notifications (email, push, messaging).
+    
+*   Integrate with third-party services.
+    
+*   Support multi-tenancy.
+    
+*   Implement distributed or microservice architecture.
+    
+
+These may be added in later phases intentionally.
