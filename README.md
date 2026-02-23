@@ -379,3 +379,153 @@ Supporting Types
     
 
 This establishes the foundational domain model for Phase 2 and prepares the system for deeper LLD design steps such as relationships, service design, and data structures.
+
+
+Step 2 – Entity Responsibilities & Relationships
+================================================
+
+1\. User – Responsibilities
+---------------------------
+
+### User is responsible for:
+
+*   Holding user identity data
+    
+*   Representing task ownership
+    
+*   Optionally maintaining a list of assigned tasks (if needed later)
+    
+
+User represents a **pure domain identity object**.
+
+### User is NOT responsible for:
+
+*   Creating tasks
+    
+*   Assigning tasks
+    
+*   Changing task status
+    
+*   Enforcing business rules
+    
+*   Managing workflow transitions
+    
+
+These behaviors belong to the **service layer**, not the entity.
+
+**Conclusion:**
+User is a lightweight domain object focused strictly on identity and ownership representation.
+
+2\. Task – Responsibilities
+---------------------------
+
+Task is the central domain entity.
+
+### Task is responsible for:
+
+*   Holding task data
+    
+*   Managing its own state
+    
+*   Validating status transitions
+    
+*   Updating its priority
+    
+*   Maintaining reference to the assigned user
+    
+
+Task encapsulates business invariants related to itself.
+
+### Task is NOT responsible for:
+
+*   Finding users
+    
+*   Persisting itself
+    
+*   Performing global task queries
+    
+*   Managing collections of tasks
+    
+*   Handling cross-entity coordination
+    
+
+Those responsibilities belong to repositories or service-layer abstractions.
+
+**Conclusion:**
+Task owns its internal consistency and state transitions but does not manage external concerns.
+
+3\. Relationship Between User and Task
+--------------------------------------
+
+We must decide how the relationship is modeled.
+
+Two options:
+
+*   **Option A:** User → List
+    
+*   **Option B:** Task → assignedUser (reference only)
+    
+
+### Decision
+
+We choose:
+
+**Task contains a reference to assignedUser.**
+**User does not maintain a task list initially.**
+
+### Why Unidirectional?
+
+*   Avoid bidirectional relationship complexity
+    
+*   Avoid synchronization issues between two aggregates
+    
+*   Prevent accidental inconsistency
+    
+*   Keep domain model simple
+    
+*   Query tasks through the service layer instead
+    
+
+This keeps the domain model clean and avoids premature optimization.
+
+Unidirectional relationships reduce coupling and improve maintainability in early-stage system design.
+
+4\. TaskStatus and Priority
+---------------------------
+
+TaskStatus and Priority are modeled as enums.
+
+They:
+
+*   Represent controlled value sets
+    
+*   Define allowed states and classifications
+    
+*   Do not have independent identity
+    
+*   Do not have lifecycle
+    
+
+Only the **Task** entity is allowed to modify:
+
+*   Its status
+    
+*   Its priority
+    
+
+No external class should manipulate them directly.
+
+### Why Enums?
+
+*   Fixed, bounded set of values
+    
+*   No separate persistence needed
+    
+*   No independent business identity
+    
+*   Lightweight and sufficient for current requirements
+    
+*   Easy to extend later if needed
+    
+
+This aligns with minimalistic and clean LLD principles.
