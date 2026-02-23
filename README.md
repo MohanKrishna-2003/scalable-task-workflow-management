@@ -1,13 +1,18 @@
-# scalable-task-workflow-management
+scalable-task-workflow-management
+=================================
 
-## Problem Statement
+Problem Statement
+-----------------
+
 Modern teams require reliable backend systems to manage tasks, workflows, and ownership efficiently as the system scales.
 
-The goal of this project is to design and implement a <b>scalable, extensible backend system</b> that supports task creation, assignment, workflow tracking, and prioritization while maintaining clean architecture and strong object-oriented design principles.
+The goal of this project is to design and implement a **scalable, extensible backend system** that supports task creation, assignment, workflow tracking, and prioritization while maintaining clean architecture and strong object-oriented design principles.
 
 The system is designed to evolve incrementally, allowing new workflow rules, prioritization strategies, and scalability enhancements without major code changes. The focus is on backend engineering practices such as SOLID principles, proper data structure selection, and clean separation of responsibilities.
 
-  
+PHASE 1 – System Scope & Boundaries
+===================================
+
 Functional Requirements
 -----------------------
 
@@ -28,17 +33,17 @@ Functional Requirements
     
 *   Each task shall have:
     
-    *   unique task ID
+    *   Unique task ID
         
-    *   title
+    *   Title
         
-    *   description
+    *   Description
         
-    *   priority
+    *   Priority
         
-    *   status
+    *   Status
         
-    *   creation timestamp
+    *   Creation timestamp
         
 *   The system shall allow updating task details.
     
@@ -82,27 +87,27 @@ Functional Requirements
 
 ### 6\. Task Retrieval & Querying
 
-*   The system shall allow fetching:
+The system shall allow fetching:
+
+*   All tasks
     
-    *   all tasks
-        
-    *   tasks assigned to a specific user
-        
-    *   tasks filtered by status
-        
-    *   tasks sorted by priority
-        
-*   The system shall support efficient task lookup by task ID.
+*   Tasks assigned to a specific user
+    
+*   Tasks filtered by status
+    
+*   Tasks sorted by priority
     
 
-### 7\. Workflow Extensibility (Very Important)
+The system shall support efficient task lookup by task ID.
+
+### 7\. Workflow Extensibility
 
 *   The system shall allow introduction of new task types in the future.
     
 *   The system shall allow modification of workflow rules without impacting existing logic.
     
 
-(**we will design this in future**.)
+_(To be designed in future phases.)_
 
 ### 8\. Error Handling
 
@@ -110,13 +115,14 @@ Functional Requirements
     
 *   Meaningful errors shall be returned for:
     
-    *   invalid task ID
+    *   Invalid task ID
         
-    *   invalid user ID
+    *   Invalid user ID
         
-    *   invalid status transitions
- 
-  Non-Functional Requirements
+    *   Invalid status transitions
+        
+
+Non-Functional Requirements
 ---------------------------
 
 ### 1\. Scalability
@@ -158,29 +164,31 @@ Functional Requirements
 *   Race conditions should be preventable through proper design choices.
     
 
-(for the time being we won't implement this as of now — but we will prepare for it.)
+_(Not implemented in the current phase, but prepared for future enhancement.)_
 
 ### 6\. Extensibility
 
-*   The system architecture should allow:
+The system architecture should allow:
+
+*   Introduction of new workflow states
     
-    *   introduction of new workflow states
-        
-    *   new prioritization strategies
-        
-    *   additional task metadata
-        
+*   New prioritization strategies
+    
+*   Additional task metadata
+    
 
 ### 7\. Testability
 
 *   Core business logic should be independent of external frameworks.
     
 *   Services should be testable in isolation.
+    
 
 System Scope
-------------
+============
 
-### In Scope
+In Scope
+--------
 
 The system will:
 
@@ -192,26 +200,21 @@ The system will:
     
 *   Maintain clean separation between:
     
-    *   domain logic
+    *   Domain logic
         
-    *   service layer
+    *   Service layer
         
-    *   data storage abstractions
+    *   Data storage abstractions
         
 *   Be designed with scalability and extensibility in mind.
     
-*   Use in-memory data storage for initial implementation.
+*   Use in-memory data storage for the initial implementation.
     
 *   Be implemented as a modular backend application.
     
 
-🚫 OUT OF SCOPE (Explicitly)
-============================
-
-This is equally important.
-
 Out of Scope
-------------
+============
 
 The system will not:
 
@@ -230,4 +233,149 @@ The system will not:
 *   Implement distributed or microservice architecture.
     
 
-These may be added in later phases intentionally.
+These capabilities may be added intentionally in later phases.
+
+PHASE 2 – LLD Design
+====================
+
+Step 1: Core Entity Identification
+----------------------------------
+
+This step asks:
+
+> What are the core business objects that must exist for this system to function?
+
+At the business level, the core entities are:
+
+1.  User
+    
+2.  Task
+    
+3.  Workflow
+    
+4.  TaskStatus
+    
+5.  Priority
+    
+
+User
+----
+
+### Why It Must Exist
+
+*   Tasks are assigned to users.
+    
+*   Ownership must be tracked.
+    
+
+### Attributes
+
+*   userId
+    
+*   name
+    
+*   email
+    
+*   assignedTasks (may be modeled as a relationship, not stored directly initially)
+    
+
+**Conclusion:**User is a strong domain entity.
+
+Task
+----
+
+### Description
+
+Task is the central entity of the system.
+
+### Attributes
+
+*   taskId
+    
+*   title
+    
+*   description
+    
+*   priority
+    
+*   status
+    
+*   createdAt
+    
+*   assignedUser
+    
+
+Task represents the core business object driving the system.
+
+Workflow
+--------
+
+Workflow logic is considered part of the Task.
+
+If a task does not exist, there is no workflow related to it.
+
+We model:
+
+*   Status transitions
+    
+*   Allowed state changes
+    
+
+Without introducing a separate Workflow entity.
+
+### Decision
+
+Workflow as a separate entity is not required at this stage.The design remains extensible for future enhancement.
+
+TaskStatus
+----------
+
+TaskStatus is not a full entity.It represents a controlled state.
+
+It will be modeled as an enum for now.
+
+Supported values:
+
+*   TODO
+    
+*   IN\_PROGRESS
+    
+*   COMPLETED
+    
+
+Priority
+--------
+
+Priority is not an entity.It is a classification mechanism.
+
+It will also be modeled as an enum.
+
+Supported values:
+
+*   LOW
+    
+*   MEDIUM
+    
+*   HIGH
+    
+
+Final Entity List
+=================
+
+Core Domain Entities
+--------------------
+
+*   User
+    
+*   Task
+    
+
+Supporting Types
+----------------
+
+*   TaskStatus (enum)
+    
+*   Priority (enum)
+    
+
+This establishes the foundational domain model for Phase 2 and prepares the system for deeper LLD design steps such as relationships, service design, and data structures.
