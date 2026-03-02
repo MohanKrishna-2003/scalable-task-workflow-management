@@ -529,3 +529,106 @@ No external class should manipulate them directly.
     
 
 This aligns with minimalistic and clean LLD principles.
+
+Here is your content in a clean, structured format:
+
+Step 3 – Service Layer Identification
+=====================================
+
+Now we determine **which object performs which operations**.
+
+Let’s think clearly:
+
+Who should handle:
+
+*   Creating a task?
+    
+*   Assigning a task to a user?
+    
+*   Changing task status?
+    
+*   Getting all tasks of a user?
+    
+*   Getting tasks by status?
+    
+*   Updating priority?
+    
+*   Deleting a task?
+    
+
+These operations should **NOT** be placed inside User or Task.
+
+Why?
+
+Because that would overload entities with too many responsibilities and violate clean design principles.
+
+These operations belong to the **Service Layer**.
+
+Correct approach:Business coordination logic should live inside a Service.
+
+1.  Proposed Service
+    
+
+We introduce:
+
+### TaskService – Responsibilities
+
+*   createTask(...)
+    
+*   assignTask(taskId, userId)
+    
+*   changeStatus(taskId, status)
+    
+*   updatePriority(taskId, priority)
+    
+*   getTasksByUser(userId)
+    
+*   getTasksByStatus(status)
+    
+*   deleteTask(taskId)
+    
+
+This design ensures:
+
+*   **Entities → Pure domain models**
+    
+*   **Service → Business logic coordination**
+    
+*   **Clear separation of concerns**
+    
+
+1.  Why Service Layer?
+    
+
+Because:
+
+*   Entities should protect their **internal consistency**
+    
+*   Service layer coordinates **multiple entities**
+    
+*   Business rules do not belong inside simple data objects
+    
+*   Cross-entity operations must be centralized
+    
+*   Application workflow should not live inside domain identity objects
+    
+
+Entities manage their own invariants.Services orchestrate use cases.
+
+Conclusion
+----------
+
+By introducing TaskService:
+
+*   We avoid bloated entities
+    
+*   We keep domain objects clean
+    
+*   We centralize business operations
+    
+*   We follow clean architecture principles
+    
+*   We improve maintainability and scalability
+    
+
+This is proper Low-Level Design thinking with a clean separation between **data and behavior orchestration**.
