@@ -632,3 +632,152 @@ By introducing TaskService:
     
 
 This is proper Low-Level Design thinking with a clean separation between **data and behavior orchestration**.
+
+Step 4 – Interface Design (Abstraction Layer)
+=============================================
+
+Why Interface is Needed
+-----------------------
+
+In a clean architecture design, business operations should depend on **abstractions rather than concrete implementations**.
+
+Instead of directly implementing a service class, we first define an **interface** that declares the required operations.
+
+Using an interface for the service layer provides several advantages:
+
+*   **Loose Coupling**The rest of the system depends on a contract instead of a specific implementation.
+    
+*   **Better Testability**Interfaces allow easy mocking during unit testing.
+    
+*   **Flexibility to Change Implementation**The implementation can change without affecting other parts of the system.
+    
+*   **Support for Multiple Implementations**Example future implementations:
+    
+    *   InMemoryTaskService
+        
+    *   DatabaseTaskService
+        
+    *   RemoteTaskService (microservice / API)
+        
+
+This design follows the **Dependency Inversion Principle (DIP)**:
+
+> High-level modules should not depend on low-level modules.Both should depend on abstractions.
+
+By introducing a service interface, the system becomes **more maintainable, testable, and scalable**.
+
+TaskService Interface
+=====================
+
+The **TaskService interface** defines the contract for task-related operations.
+
+It specifies **what operations are available**, but does **not define how they are implemented**.
+
+### Responsibilities of TaskService
+
+TaskService will expose the following operations:
+
+*   createTask(...)
+    
+*   assignTask(taskId, userId)
+    
+*   updateStatus(taskId, status)
+    
+*   updatePriority(taskId, priority)
+    
+*   getTasksByUser(userId)
+    
+*   getTasksByStatus(status)
+    
+*   deleteTask(taskId)
+    
+
+These operations represent the **core application use cases** for managing tasks.
+
+The interface ensures that:
+
+*   The service layer exposes **clear business capabilities**
+    
+*   Implementations remain **replaceable**
+    
+*   Higher layers remain **decoupled from concrete logic**
+    
+
+Implementation Class
+====================
+
+To implement the interface, we introduce a concrete class:
+
+**TaskServiceImpl**
+
+### Responsibilities of TaskServiceImpl
+
+TaskServiceImpl will:
+
+*   Implement the TaskService interface
+    
+*   Contain the **actual business logic**
+    
+*   Manage **task data storage (in-memory for now)**
+    
+*   Coordinate interactions between **User and Task entities**
+    
+
+For the current phase, the implementation will use **in-memory data structures**, such as:
+
+*   HashMap for storing tasks
+    
+*   HashMap for storing users
+    
+
+This approach keeps the system simple while enabling easy expansion later.
+
+Future Possibilities
+====================
+
+By designing with an interface, the system becomes extensible.
+
+Possible future enhancements include:
+
+### Database-backed Implementation
+
+Replace the in-memory implementation with:
+DatabaseTaskServiceImpl   `
+
+This implementation could integrate with:
+
+*   MySQL
+    
+*   PostgreSQL
+    
+*   MongoDB
+    
+
+### REST API Layer
+
+A controller layer could expose endpoints such as:
+ POST /tasksGET /tasks/user/{id}PUT /tasks/{id}/status   `
+
+The controller would depend only on the **TaskService interface**, not on its implementation.
+
+### Microservice Architecture
+
+The task system could later evolve into a **separate microservice**, while still maintaining the same service interface.
+
+Summary
+=======
+
+By introducing the **TaskService interface**, we achieve:
+
+*   Clean separation of **interface vs implementation**
+    
+*   Reduced **coupling**
+    
+*   Improved **testability**
+    
+*   Support for **multiple implementations**
+    
+*   Better alignment with **clean architecture principles**
+    
+
+This abstraction layer prepares the system for the upcoming steps in Low-Level Design, including **data structures, repositories, and implementation details**.
