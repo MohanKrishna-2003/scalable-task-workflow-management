@@ -781,3 +781,234 @@ By introducing the **TaskService interface**, we achieve:
     
 
 This abstraction layer prepares the system for the upcoming steps in Low-Level Design, including **data structures, repositories, and implementation details**.
+
+
+Step 5: High-Level Class Design
+===============================
+
+In this step, we connect the previously identified entities, supporting types, and services into a clear **class structure**.
+
+This stage focuses on identifying:
+
+*   Core classes
+    
+*   Their responsibilities
+    
+*   How they relate to each other
+    
+
+The goal is to ensure a **clean separation between domain models, supporting types, and service-layer logic**, while keeping the architecture simple and extensible.
+
+1\. Domain Classes
+==================
+
+User
+----
+
+The **User** class represents a system user who can own or be assigned tasks.
+
+### Attributes
+
+*   userId
+    
+*   name
+    
+*   email
+    
+
+### Responsibilities
+
+The User entity is responsible for:
+
+*   Holding user identity information
+    
+*   Representing task ownership
+    
+*   Acting as a reference when tasks are assigned
+    
+
+The User class intentionally remains lightweight and does not contain business logic related to task operations.
+
+Task
+----
+
+The **Task** class represents the core business object of the system.
+
+### Attributes
+
+*   taskId
+    
+*   title
+    
+*   description
+    
+*   priority
+    
+*   status
+    
+*   createdAt
+    
+*   assignedUser
+    
+
+### Responsibilities
+
+The Task entity is responsible for:
+
+*   Storing task-related data
+    
+*   Maintaining its current workflow state
+    
+*   Validating allowed status transitions
+    
+*   Updating priority
+    
+*   Tracking the assigned user
+    
+
+The Task entity ensures **internal consistency of its own state**, but it does not perform cross-entity operations such as locating users or managing collections of tasks.
+
+2\. Supporting Enums
+====================
+
+Supporting enums define controlled value sets used by the domain model.
+
+They represent bounded classifications and do not have independent identity.
+
+TaskStatus
+----------
+
+TaskStatus represents the **workflow state** of a task.
+
+### Supported Values
+
+*   TODO
+    
+*   IN\_PROGRESS
+    
+*   COMPLETED
+    
+
+### Purpose
+
+*   Defines the allowed states in the task workflow
+    
+*   Helps enforce valid state transitions
+    
+*   Maintains a controlled workflow lifecycle
+    
+
+Priority
+--------
+
+Priority represents the **urgency level of a task**.
+
+### Supported Values
+
+*   LOW
+    
+*   MEDIUM
+    
+*   HIGH
+    
+
+### Purpose
+
+*   Classifies tasks based on urgency
+    
+*   Enables priority-based ordering and retrieval
+    
+*   Supports task prioritization logic
+    
+
+3\. Service Interface
+=====================
+
+TaskService (Interface)
+-----------------------
+
+The **TaskService interface** defines the contract for task-related operations in the system.
+
+It describes **what operations are available**, without specifying how they are implemented.
+
+### Declared Operations
+
+*   createTask(...)
+    
+*   assignTask(taskId, userId)
+    
+*   updateStatus(taskId, status)
+    
+*   updatePriority(taskId, priority)
+    
+*   getTasksByUser(userId)
+    
+*   getTasksByStatus(status)
+    
+*   deleteTask(taskId)
+    
+
+### Purpose
+
+The interface ensures that:
+
+*   Higher-level components depend on **abstractions**
+    
+*   Implementations remain **replaceable**
+    
+*   The system follows the **Dependency Inversion Principle**
+    
+
+4\. Service Implementation
+==========================
+
+TaskServiceImpl
+---------------
+
+The **TaskServiceImpl** class provides the concrete implementation of the TaskService interface.
+
+### Responsibilities
+
+TaskServiceImpl is responsible for:
+
+*   Implementing task-related business operations
+    
+*   Coordinating interactions between User and Task entities
+    
+*   Managing in-memory storage for tasks and users
+    
+*   Handling task assignment, updates, and queries
+    
+
+### Storage Strategy (Current Phase)
+
+For the initial version, the implementation uses **in-memory data structures**, such as:
+
+*   HashMap
+    
+*   HashMap
+    
+
+This provides efficient lookup and keeps the implementation simple while allowing future migration to database-backed storage.
+
+5\. High-Level Class Relationships
+==================================
+
+The service layer coordinates operations between domain entities.
+
+TaskServiceImpl --manages-> Task --assigned to--> User 
+
+The Task entity also depends on supporting types:
+
+Task = Priority, TaskStatus
+
+### Relationship Explanation
+
+*   **TaskServiceImpl → Task**The service manages the lifecycle and operations of tasks.
+    
+*   **Task → User**Each task maintains a reference to the user currently assigned to it.
+    
+*   **Task → Priority / TaskStatus**These enums represent controlled classifications used by the task.
+    
+
+This design keeps **entities simple, services responsible for orchestration, and supporting types lightweight**.
