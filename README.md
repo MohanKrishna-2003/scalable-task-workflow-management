@@ -910,7 +910,177 @@ Priority represents the **urgency level of a task**.
 *   MEDIUM
     
 *   HIGH
+
+Step 6: Data Structure Decisions
+================================
+
+At this stage of the design, we determine **how tasks and users will be stored and retrieved efficiently**.
+
+Since the current implementation uses **in-memory storage**, choosing appropriate data structures is critical for maintaining good performance as the number of users and tasks grows.
+
+The goal is to ensure that common operations such as **task lookup, assignment, and querying** remain efficient while keeping the design simple and extensible.
+
+Design Considerations
+=====================
+
+The system must support the following operations:
+
+*   Create a task
     
+*   Find a task by ID
+    
+*   Assign a task to a user
+    
+*   Retrieve tasks assigned to a user
+    
+*   Retrieve tasks by status
+    
+*   Delete a task
+    
+
+If tasks were stored using a simple list, operations such as **finding a task by ID or deleting a task** would require scanning the entire list, resulting in **O(n)** time complexity.
+
+To avoid this, we use **hash-based data structures** that provide constant-time lookups.
+
+Task Storage
+============
+
+Tasks will be stored using a **HashMap**.
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Map taskStore   `
+
+### Key
+
+taskId
+
+### Value
+
+Task object
+
+### Reason
+
+Using a HashMap allows:
+
+*   **O(1) average time complexity** for task lookup
+    
+*   Efficient updates to task data
+    
+*   Fast deletion of tasks
+    
+*   Direct access to tasks without scanning the entire collection
+    
+
+This structure forms the **primary index** for all task-related operations.
+
+User Storage
+============
+
+Users will also be stored using a **HashMap**.
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Map userStore   `
+
+### Key
+
+userId
+
+### Value
+
+User object
+
+### Reason
+
+This allows:
+
+*   Fast retrieval of users when assigning tasks
+    
+*   Efficient validation of user existence
+    
+*   Constant-time lookup during task assignment operations
+    
+
+Using a hash-based structure keeps **user-related operations lightweight and efficient**.
+
+Task Queries
+============
+
+The system must support retrieving:
+
+*   Tasks assigned to a specific user
+    
+*   Tasks filtered by status
+    
+
+For the initial implementation, these queries will be handled by **iterating over the taskStore**.
+
+### Approach
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   for(Task task : taskStore.values())   `
+
+### Reason
+
+This approach is chosen because:
+
+*   It keeps the initial implementation simple
+    
+*   The expected data volume is manageable in early phases
+    
+*   It avoids premature optimization
+    
+*   It keeps the system easier to maintain during early development
+    
+
+Although iteration is **O(n)**, it is acceptable for the current scope.
+
+Future Optimization (Secondary Indexes)
+=======================================
+
+If the system grows and query performance becomes critical, additional **secondary indexes** can be introduced.
+
+Possible optimizations include:
+
+### Tasks by User
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Map> tasksByUser   `
+
+Key → userIdValue → List of tasks assigned to that user
+
+This allows **O(1) access** to tasks belonging to a specific user.
+
+### Tasks by Status
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Map> tasksByStatus   `
+
+Key → TaskStatusValue → List of tasks currently in that state
+
+This allows fast retrieval of tasks based on workflow status.
+
+Priority Handling
+=================
+
+Task priority will initially be represented using the **Priority enum** within the Task entity.
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Priority priority   `
+
+This allows tasks to be classified by urgency.
+
+For the current implementation, priority-based sorting can be handled when retrieving tasks.
+
+Future Enhancement for Priority-Based Retrieval
+===============================================
+
+If the system later requires **efficient retrieval of highest-priority tasks**, a **priority-based data structure** can be introduced.
+
+Possible option:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   PriorityQueue   `
+
+This structure would allow:
+
+*   Efficient retrieval of the **highest-priority task**
+    
+*   Automatic ordering based on priority
+    
+*   Support for scheduling or queue-based task processing
 
 ### Purpose
 
@@ -1012,3 +1182,173 @@ Task = Priority, TaskStatus
     
 
 This design keeps **entities simple, services responsible for orchestration, and supporting types lightweight**.
+
+Step 6: Data Structure Decisions
+================================
+
+At this stage of the design, we determine **how tasks and users will be stored and retrieved efficiently**.
+
+Since the current implementation uses **in-memory storage**, choosing appropriate data structures is critical for maintaining good performance as the number of users and tasks grows.
+
+The goal is to ensure that common operations such as **task lookup, assignment, and querying** remain efficient while keeping the design simple and extensible.
+
+Design Considerations
+=====================
+
+The system must support the following operations:
+
+*   Create a task
+    
+*   Find a task by ID
+    
+*   Assign a task to a user
+    
+*   Retrieve tasks assigned to a user
+    
+*   Retrieve tasks by status
+    
+*   Delete a task
+    
+
+If tasks were stored using a simple list, operations such as **finding a task by ID or deleting a task** would require scanning the entire list, resulting in **O(n)** time complexity.
+
+To avoid this, we use **hash-based data structures** that provide constant-time lookups.
+
+Task Storage
+============
+
+Tasks will be stored using a **HashMap**.
+
+`Map<String, Task> taskStore`
+
+### Key
+
+taskId
+
+### Value
+
+Task object
+
+### Reason
+
+Using a HashMap allows:
+
+*   **O(1) average time complexity** for task lookup
+    
+*   Efficient updates to task data
+    
+*   Fast deletion of tasks
+    
+*   Direct access to tasks without scanning the entire collection
+    
+
+This structure forms the **primary index** for all task-related operations.
+
+User Storage
+============
+
+Users will also be stored using a **HashMap**.
+` Map<String, User> userStore  `
+
+### Key
+
+userId
+
+### Value
+
+User object
+
+### Reason
+
+This allows:
+
+*   Fast retrieval of users when assigning tasks
+    
+*   Efficient validation of user existence
+    
+*   Constant-time lookup during task assignment operations
+    
+
+Using a hash-based structure keeps **user-related operations lightweight and efficient**.
+
+Task Queries
+============
+
+The system must support retrieving:
+
+*   Tasks assigned to a specific user
+    
+*   Tasks filtered by status
+    
+
+For the initial implementation, these queries will be handled by **iterating over the taskStore**.
+
+### Approach
+
+`   for(Task task : taskStore.values())   `
+
+### Reason
+
+This approach is chosen because:
+
+*   It keeps the initial implementation simple
+    
+*   The expected data volume is manageable in early phases
+    
+*   It avoids premature optimization
+    
+*   It keeps the system easier to maintain during early development
+    
+
+Although iteration is **O(n)**, it is acceptable for the current scope.
+
+Future Optimization (Secondary Indexes)
+=======================================
+
+If the system grows and query performance becomes critical, additional **secondary indexes** can be introduced.
+
+Possible optimizations include:
+
+### Tasks by User
+
+`Map<String, List<Task>> tasksByUser`
+
+Key → userIdValue → List of tasks assigned to that user
+
+This allows **O(1) access** to tasks belonging to a specific user.
+
+### Tasks by Status
+
+Plain 
+`Map<TaskStatus, List<Task>> tasksByStatus`
+
+Key → TaskStatusValue → List of tasks currently in that state
+
+This allows fast retrieval of tasks based on workflow status.
+
+Priority Handling
+=================
+
+Task priority will initially be represented using the **Priority enum** within the Task entity.
+
+`   Priority priority   `
+
+This allows tasks to be classified by urgency.
+
+For the current implementation, priority-based sorting can be handled when retrieving tasks.
+
+Future Enhancement for Priority-Based Retrieval
+===============================================
+
+If the system later requires **efficient retrieval of highest-priority tasks**, a **priority-based data structure** can be introduced.
+
+Possible option:
+`   PriorityQueue   `
+
+This structure would allow:
+
+*   Efficient retrieval of the **highest-priority task**
+    
+*   Automatic ordering based on priority
+    
+*   Support for scheduling or queue-based task processing
