@@ -84,4 +84,9 @@ public class TaskServiceImpl implements TaskService{
         taskStore.remove(taskId);
     }
 
+    // temporary method to get the userStore
+    public Map<String, User> getUserStore() {
+        return userStore;
+    }
+
 }
