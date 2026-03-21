@@ -7,7 +7,7 @@ import com.mohan.taskmanager.task_workflow_system.model.TaskStatus;
 import java.util.List;
 
 public interface TaskService {
-    // so here this service gives what jobs or services it can do. that's it
+    // so here this service gives what it can do. that's it
     Task createTask(String title, String description, Priority priority);
 
     void assignTask(String taskId, String userId);
