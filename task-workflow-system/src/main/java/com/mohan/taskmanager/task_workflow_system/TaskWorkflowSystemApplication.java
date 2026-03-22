@@ -38,6 +38,7 @@ public class TaskWorkflowSystemApplication {
 
 		// updating task status
 		taskService.updateStatus(task1.getTaskId(), TaskStatus.IN_PROGRESS);
+		taskService.updateStatus(task2.getTaskId(), TaskStatus.COMPLETED);
 
 		// fetching tasks by user
 		System.out.println("Tasks assigned to u1:");
