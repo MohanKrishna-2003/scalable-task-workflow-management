@@ -24,6 +24,13 @@ public class TaskServiceImpl implements TaskService{
     }
 
     @Override
+    public User createUser(String userId, String name, String email){
+        User user = new User(userId, name, email);
+        userStore.put(userId, user);
+        return user;
+    }
+
+    @Override
     public void assignTask(String taskId, String userId){
         Task task = taskStore.get(taskId);
         User user = userStore.get(userId);

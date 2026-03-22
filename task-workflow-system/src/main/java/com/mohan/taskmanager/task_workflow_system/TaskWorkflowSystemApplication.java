@@ -22,8 +22,11 @@ public class TaskWorkflowSystemApplication {
 
 		// assigning tasks to users
 		// actually we are typecasting to TaskServiceImpl to access the user store, which is not a good practice. In real application we should have a separate UserService to manage users.
-		((TaskServiceImpl) taskService).getUserStore().put("u1", user1);
-		((TaskServiceImpl) taskService).getUserStore().put("u2", user2);
+//		((TaskServiceImpl) taskService).getUserStore().put("u1", user1);
+//		((TaskServiceImpl) taskService).getUserStore().put("u2", user2);
+
+		User u1 = taskService.createUser("u1", "Luffy", "luffy@gmail.com");
+		User u2 = taskService.createUser("u2", "Zoro", "zoro@gmail.com");
 
 		// creating tasks
 		Task task1 = taskService.createTask("Design Database", "Design the database schema for the project", Priority.HIGH);
