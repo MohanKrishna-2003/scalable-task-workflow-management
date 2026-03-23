@@ -1,5 +1,7 @@
 package com.mohan.taskmanager.task_workflow_system.service;
 
+import com.mohan.taskmanager.task_workflow_system.exception.TaskNotFoundException;
+import com.mohan.taskmanager.task_workflow_system.exception.UserNotFoundException;
 import com.mohan.taskmanager.task_workflow_system.model.Priority;
 import com.mohan.taskmanager.task_workflow_system.model.Task;
 import com.mohan.taskmanager.task_workflow_system.model.TaskStatus;
@@ -35,10 +37,10 @@ public class TaskServiceImpl implements TaskService{
         Task task = taskStore.get(taskId);
         User user = userStore.get(userId);
         if(taskId == null){
-            throw new RuntimeException("Task not found");
+            throw new TaskNotFoundException("Task not found with id " + taskId);
         }
         if(userId == null){
-            throw new RuntimeException("User not found");
+            throw new UserNotFoundException("User not found with id " + userId);
         }
         task.assignUser(user);
     }
@@ -47,7 +49,7 @@ public class TaskServiceImpl implements TaskService{
     public void updateStatus(String taskId, TaskStatus taskStatus){
         Task task = taskStore.get(taskId);
         if(task == null){
-            throw new RuntimeException("Task not found");
+            throw new TaskNotFoundException("Task not found with id " + taskId);
         }
         task.updateStatus(taskStatus);
     }
@@ -56,7 +58,7 @@ public class TaskServiceImpl implements TaskService{
     public void updatePriority(String taskId, Priority priority){
         Task task = taskStore.get(taskId);
         if (task == null) {
-            throw new RuntimeException("Task not found");
+            throw new TaskNotFoundException("Task not found with id " + taskId);
         }
         task.updatePriority(priority);
     }
@@ -86,7 +88,7 @@ public class TaskServiceImpl implements TaskService{
     @Override
     public void deleteTask(String taskId){
         if(!taskStore.containsKey(taskId)){
-            throw new RuntimeException("Task not found");
+            throw new TaskNotFoundException("Task not found with id " + taskId);
         }
         taskStore.remove(taskId);
     }
