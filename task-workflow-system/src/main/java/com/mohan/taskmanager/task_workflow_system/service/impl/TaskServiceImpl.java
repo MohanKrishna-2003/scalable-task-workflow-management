@@ -1,17 +1,27 @@
-package com.mohan.taskmanager.task_workflow_system.service;
+package com.mohan.taskmanager.task_workflow_system.service.impl;
 
 import com.mohan.taskmanager.task_workflow_system.exception.TaskNotFoundException;
 import com.mohan.taskmanager.task_workflow_system.exception.UserNotFoundException;
-import com.mohan.taskmanager.task_workflow_system.model.Priority;
+import com.mohan.taskmanager.task_workflow_system.enums.Priority;
 import com.mohan.taskmanager.task_workflow_system.model.Task;
-import com.mohan.taskmanager.task_workflow_system.model.TaskStatus;
+import com.mohan.taskmanager.task_workflow_system.enums.TaskStatus;
 import com.mohan.taskmanager.task_workflow_system.model.User;
+import com.mohan.taskmanager.task_workflow_system.service.interfaces.TaskService;
+import com.mohan.taskmanager.task_workflow_system.service.interfaces.UserService;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-public class TaskServiceImpl implements TaskService{
+@Service
+public class TaskServiceImpl implements TaskService {
     private Map<String, Task> taskStore = new HashMap<>();
-    private Map<String, User> userStore = new HashMap<>();
+
+    private final UserService userService;
+
+    public TaskServiceImpl(UserService userService) {
+        this.userService = userService;
+    }
+
 
     private String generateTaskId() {
         return UUID.randomUUID().toString();
@@ -26,20 +36,13 @@ public class TaskServiceImpl implements TaskService{
     }
 
     @Override
-    public User createUser(String userId, String name, String email){
-        User user = new User(userId, name, email);
-        userStore.put(userId, user);
-        return user;
-    }
-
-    @Override
     public void assignTask(String taskId, String userId){
         Task task = taskStore.get(taskId);
-        User user = userStore.get(userId);
         if(taskId == null){
             throw new TaskNotFoundException("Task not found with id " + taskId);
         }
-        if(userId == null){
+        User user = userService.getUserById(userId);
+        if(user == null){
             throw new UserNotFoundException("User not found with id " + userId);
         }
         task.assignUser(user);
@@ -64,25 +67,25 @@ public class TaskServiceImpl implements TaskService{
     }
 
     @Override
-    public List<Task> getTaskByUser(String userId){
-        List<Task> result = new ArrayList<>();
+    public List<Task> getTasksByUser(String userId){
+        List<Task> tasks = new ArrayList<>();
         for(Task task: taskStore.values()){
             if(task.getAssignedUser()!=null && task.getAssignedUser().getUserId().equals(userId)){
-                result.add(task);
+                tasks.add(task);
             }
         }
-        return result;
+        return tasks;
     }
 
     @Override
-    public List<Task> getTaskByStatus(TaskStatus taskStatus){
-        List<Task> result = new ArrayList<>();
+    public List<Task> getTasksByStatus(TaskStatus taskStatus){
+        List<Task> tasks = new ArrayList<>();
         for(Task task: taskStore.values()){
             if(task.getStatus().equals(taskStatus)){
-                result.add(task);
+                tasks.add(task);
             }
         }
-        return result;
+        return tasks;
     }
 
     @Override
@@ -93,9 +96,9 @@ public class TaskServiceImpl implements TaskService{
         taskStore.remove(taskId);
     }
 
-    // temporary method to get the userStore
-    public Map<String, User> getUserStore() {
-        return userStore;
+    @Override
+    public List<Task> getAllTasks(){
+        return new ArrayList<>(taskStore.values());
     }
 
 }
