@@ -15,8 +15,11 @@ import com.mohan.taskmanager.task_workflow_system.repository.TaskRepository;
 import com.mohan.taskmanager.task_workflow_system.service.interfaces.TaskService;
 import com.mohan.taskmanager.task_workflow_system.service.interfaces.UserService;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -72,17 +75,50 @@ public class TaskServiceImpl implements TaskService {
         task.updatePriority(priority);
     }
 
+    private Sort parseSort(String sort) {
+
+        if (sort == null || sort.isBlank()) {
+            return Sort.by("createdAt").descending();
+        }
+
+        String[] parts = sort.split(",");
+
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Invalid sort format. Use field,asc or field,desc");
+        }
+
+        String field = parts[0].trim();
+        String direction = parts[1].trim().toLowerCase();
+
+        if (field.isEmpty()) {
+            throw new IllegalArgumentException("Sort field cannot be empty");
+        }
+
+        return switch (direction) {
+            case "asc" -> Sort.by(field).ascending();
+            case "desc" -> Sort.by(field).descending();
+            default -> throw new IllegalArgumentException(
+                    "Invalid sort direction: " + direction + ". Use asc or desc"
+            );
+        };
+    }
+
     @Override
-    public List<TaskResponseDTO> getTasks(String userId, TaskStatus taskStatus){
-        return taskRepository.findAll()
-                .stream()
-                .filter(task -> {
-                    boolean matchesUser = (userId == null) || (task.getAssignedUser() != null && task.getAssignedUser().getUserId().equals(userId));
-                    boolean matchesStatus = (taskStatus == null) || (task.getStatus().equals(taskStatus));
-                    return matchesStatus & matchesUser;
-                })
-                .map(TaskMapper::toDTO)
-                .toList();
+    public Page<TaskResponseDTO> getTasks(String userId, TaskStatus taskStatus, int page, int size, String sort){
+
+        Sort sorting = parseSort(sort);
+        Pageable pageable = PageRequest.of(page, size, sorting);
+        Page<Task> tasks;
+        if(userId != null && taskStatus != null){
+            tasks = taskRepository.findByAssignedUser_UserIdAndStatus(userId, taskStatus, pageable);
+        } else if(userId != null){
+            tasks = taskRepository.findByAssignedUser_UserId(userId, pageable);
+        } else if(taskStatus != null){
+            tasks = taskRepository.findByStatus(taskStatus, pageable);
+        } else {
+            tasks = taskRepository.findAll(pageable);
+        }
+        return tasks.map(TaskMapper::toDTO);
     }
 
     @Override

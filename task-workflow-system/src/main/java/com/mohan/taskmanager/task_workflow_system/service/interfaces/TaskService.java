@@ -7,6 +7,8 @@ import com.mohan.taskmanager.task_workflow_system.dto.response.TaskResponseDTO;
 import com.mohan.taskmanager.task_workflow_system.enums.Priority;
 import com.mohan.taskmanager.task_workflow_system.model.Task;
 import com.mohan.taskmanager.task_workflow_system.enums.TaskStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,7 +25,7 @@ public interface TaskService {
 
     void updatePriority(UUID taskId, Priority priority);
 
-    List<TaskResponseDTO> getTasks(String userId, TaskStatus taskStatus);
+    Page<TaskResponseDTO> getTasks(String userId, TaskStatus taskStatus, int page, int size, String sort);
 
 //    List<TaskResponseDTO> getAllTasks();
 

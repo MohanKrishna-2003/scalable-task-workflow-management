@@ -10,6 +10,8 @@ import com.mohan.taskmanager.task_workflow_system.model.Task;
 import com.mohan.taskmanager.task_workflow_system.enums.TaskStatus;
 import com.mohan.taskmanager.task_workflow_system.service.interfaces.TaskService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,12 +36,16 @@ public class TaskController {
 
 
     @GetMapping
-    public ResponseEntity<APIResponse<List<TaskResponseDTO>>> getTasks(
+    public ResponseEntity<APIResponse<Page<TaskResponseDTO>>> getTasks(
             @RequestParam(required = false) String userId,
-            @RequestParam(name = "status", required = false) TaskStatus taskStatus
+            @RequestParam(name = "status", required = false) TaskStatus taskStatus,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String sort
+
     ) {
 
-        List<TaskResponseDTO> tasks = taskService.getTasks(userId, taskStatus);
+        Page<TaskResponseDTO> tasks = taskService.getTasks(userId, taskStatus, page, size, sort);
 
         String message = tasks.isEmpty() ? "No tasks found for given filters" : "Tasks fetched successfully";
 
