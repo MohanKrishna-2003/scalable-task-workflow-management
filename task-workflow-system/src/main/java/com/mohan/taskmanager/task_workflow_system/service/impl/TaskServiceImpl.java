@@ -1,104 +1,96 @@
 package com.mohan.taskmanager.task_workflow_system.service.impl;
 
+import com.mohan.taskmanager.task_workflow_system.dto.request.AssignTaskDTO;
+import com.mohan.taskmanager.task_workflow_system.dto.request.TaskRequestDTO;
+import com.mohan.taskmanager.task_workflow_system.dto.request.UpdateStatusDTO;
+import com.mohan.taskmanager.task_workflow_system.dto.response.TaskResponseDTO;
 import com.mohan.taskmanager.task_workflow_system.exception.TaskNotFoundException;
 import com.mohan.taskmanager.task_workflow_system.exception.UserNotFoundException;
 import com.mohan.taskmanager.task_workflow_system.enums.Priority;
+import com.mohan.taskmanager.task_workflow_system.mapper.TaskMapper;
 import com.mohan.taskmanager.task_workflow_system.model.Task;
 import com.mohan.taskmanager.task_workflow_system.enums.TaskStatus;
 import com.mohan.taskmanager.task_workflow_system.model.User;
+import com.mohan.taskmanager.task_workflow_system.repository.TaskRepository;
 import com.mohan.taskmanager.task_workflow_system.service.interfaces.TaskService;
 import com.mohan.taskmanager.task_workflow_system.service.interfaces.UserService;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
 public class TaskServiceImpl implements TaskService {
-    private Map<String, Task> taskStore = new HashMap<>();
+//    private Map<String, Task> taskStore = new HashMap<>();
 
+    private TaskRepository taskRepository;
     private final UserService userService;
 
-    public TaskServiceImpl(UserService userService) {
+    public TaskServiceImpl(UserService userService, TaskRepository taskRepository) {
         this.userService = userService;
+        this.taskRepository = taskRepository;
     }
 
 
-    private String generateTaskId() {
-        return UUID.randomUUID().toString();
+    @Override
+    public TaskResponseDTO createTask(TaskRequestDTO dto){
+        Task task = TaskMapper.toEntity(dto);
+        task.setStatus(TaskStatus.TODO);
+        task.setCreatedAt(LocalDateTime.now());
+        task.setArchived(false);
+        task.setCreatedBy("system-user"); // later we can replace it with jwt.
+
+        Task saved = taskRepository.save(task);
+
+        return TaskMapper.toDTO(saved);
     }
 
     @Override
-    public Task createTask(String title, String description, Priority priority){
-        String taskId = generateTaskId();
-        Task task = new Task(taskId, title, description, priority);
-        taskStore.put(taskId, task);
-        return task;
-    }
-
-    @Override
-    public void assignTask(String taskId, String userId){
-        Task task = taskStore.get(taskId);
-        if(taskId == null){
-            throw new TaskNotFoundException("Task not found with id " + taskId);
-        }
-        User user = userService.getUserById(userId);
-        if(user == null){
-            throw new UserNotFoundException("User not found with id " + userId);
-        }
+    @Transactional
+    public void assignTask(UUID taskId, AssignTaskDTO userId){
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException("Task not found with id " + taskId));
+        User user = userService.getUserById(userId.getUserId());
         task.assignUser(user);
     }
 
     @Override
-    public void updateStatus(String taskId, TaskStatus taskStatus){
-        Task task = taskStore.get(taskId);
-        if(task == null){
-            throw new TaskNotFoundException("Task not found with id " + taskId);
-        }
-        task.updateStatus(taskStatus);
+    @Transactional
+    public void updateStatus(UUID taskId, UpdateStatusDTO statusDTO){
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException("Task not found with id " + taskId));
+
+        task.updateNewStatus(statusDTO.getTaskStatus());
     }
 
     @Override
-    public void updatePriority(String taskId, Priority priority){
-        Task task = taskStore.get(taskId);
-        if (task == null) {
-            throw new TaskNotFoundException("Task not found with id " + taskId);
-        }
+    public void updatePriority(UUID taskId, Priority priority){
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException("Task not found with id " + taskId));
+
         task.updatePriority(priority);
     }
 
     @Override
-    public List<Task> getTasksByUser(String userId){
-        List<Task> tasks = new ArrayList<>();
-        for(Task task: taskStore.values()){
-            if(task.getAssignedUser()!=null && task.getAssignedUser().getUserId().equals(userId)){
-                tasks.add(task);
-            }
-        }
-        return tasks;
+    public List<TaskResponseDTO> getTasks(String userId, TaskStatus taskStatus){
+        return taskRepository.findAll()
+                .stream()
+                .filter(task -> {
+                    boolean matchesUser = (userId == null) || (task.getAssignedUser() != null && task.getAssignedUser().getUserId().equals(userId));
+                    boolean matchesStatus = (taskStatus == null) || (task.getStatus().equals(taskStatus));
+                    return matchesStatus & matchesUser;
+                })
+                .map(TaskMapper::toDTO)
+                .toList();
     }
 
     @Override
-    public List<Task> getTasksByStatus(TaskStatus taskStatus){
-        List<Task> tasks = new ArrayList<>();
-        for(Task task: taskStore.values()){
-            if(task.getStatus().equals(taskStatus)){
-                tasks.add(task);
-            }
-        }
-        return tasks;
-    }
-
-    @Override
-    public void deleteTask(String taskId){
-        if(!taskStore.containsKey(taskId)){
+    public void deleteTask(UUID taskId){
+        if(!taskRepository.existsById(taskId)){
             throw new TaskNotFoundException("Task not found with id " + taskId);
         }
-        taskStore.remove(taskId);
-    }
-
-    @Override
-    public List<Task> getAllTasks(){
-        return new ArrayList<>(taskStore.values());
+        taskRepository.deleteById(taskId);
     }
 
 }

@@ -4,64 +4,54 @@ package com.mohan.taskmanager.task_workflow_system.model;
 import com.mohan.taskmanager.task_workflow_system.enums.Priority;
 import com.mohan.taskmanager.task_workflow_system.enums.TaskStatus;
 import com.mohan.taskmanager.task_workflow_system.exception.UserNotFoundException;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
+@Entity
+@Table(name = "tasks")
+@Data
+@NoArgsConstructor
 public class Task {
-    private String taskId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID taskId;
+
     private String title;
+
     private String description;
+
+    @Enumerated(EnumType.STRING)
     private Priority priority;
-    private TaskStatus status;
+
+    @Enumerated(EnumType.STRING)
+    private TaskStatus status = TaskStatus.TODO;
+
     private LocalDateTime createdAt;
+
+    private LocalDateTime dueDate;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
     private User assignedUser;
 
-    public Task(String taskId, String title, String description, Priority priority){
-        this.taskId = taskId;
-        this.title = title;
-        this.description = description;
-        this.priority = priority;
-        this.status = TaskStatus.TODO;
-        this.createdAt = LocalDateTime.now();
-    }
+    private String createdBy;
 
-    public String getTaskId() {
-        return taskId;
-    }
+    private boolean archived;
 
-    public String getTitle() {
-        return title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public Priority getPriority() {
-        return priority;
-    }
-
-    public TaskStatus getStatus() {
-        return status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public User getAssignedUser() {
-        return assignedUser;
-    }
 
     // Behavior Methods (Important for LLD)
     public void assignUser(User user){
         if(user == null){
-            throw new UserNotFoundException("User cannot be null");
+            throw new IllegalArgumentException("User cannot be null");
         }
         this.assignedUser = user;
     }
 
-    public void updateStatus(TaskStatus newStatus){
+    public void updateNewStatus(TaskStatus newStatus){
         if(newStatus == null){
             throw new IllegalArgumentException("Status cannot be null");
         }
@@ -75,15 +65,11 @@ public class Task {
                     "Invalid status transition from " + this.status + " to " + newStatus
             );
         }
-
-
-
-
     }
 
     public void updatePriority(Priority priority){
         if(priority == null){
-            throw new IllegalStateException("Priority cannot be null");
+            throw new IllegalArgumentException("Priority cannot be null");
         }
         this.priority = priority;
     }

@@ -1,28 +1,31 @@
 package com.mohan.taskmanager.task_workflow_system.service.interfaces;
 
+import com.mohan.taskmanager.task_workflow_system.dto.request.AssignTaskDTO;
+import com.mohan.taskmanager.task_workflow_system.dto.request.TaskRequestDTO;
+import com.mohan.taskmanager.task_workflow_system.dto.request.UpdateStatusDTO;
+import com.mohan.taskmanager.task_workflow_system.dto.response.TaskResponseDTO;
 import com.mohan.taskmanager.task_workflow_system.enums.Priority;
 import com.mohan.taskmanager.task_workflow_system.model.Task;
 import com.mohan.taskmanager.task_workflow_system.enums.TaskStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
-@Service
+
 public interface TaskService {
     // so here this service gives what it can do. that's it
-    Task createTask(String title, String description, Priority priority);
+    TaskResponseDTO createTask(TaskRequestDTO dto);
 
-    void assignTask(String taskId, String userId);
+    void assignTask(UUID taskId, AssignTaskDTO userId);
 
-    void updateStatus(String taskId, TaskStatus taskStatus);
+    void updateStatus(UUID taskId, UpdateStatusDTO statusDTO);
 
-    void updatePriority(String taskId, Priority priority);
+    void updatePriority(UUID taskId, Priority priority);
 
-    List<Task> getTasksByUser(String userId);
+    List<TaskResponseDTO> getTasks(String userId, TaskStatus taskStatus);
 
-    List<Task> getTasksByStatus(TaskStatus taskStatus);
+//    List<TaskResponseDTO> getAllTasks();
 
-    List<Task> getAllTasks();
-
-    void deleteTask(String taskId);
+    void deleteTask(UUID taskId);
 }

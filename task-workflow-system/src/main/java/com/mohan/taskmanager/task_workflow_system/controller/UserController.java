@@ -1,7 +1,11 @@
 package com.mohan.taskmanager.task_workflow_system.controller;
 
+import com.mohan.taskmanager.task_workflow_system.dto.request.UserRequestDTO;
+import com.mohan.taskmanager.task_workflow_system.dto.response.APIResponse;
+import com.mohan.taskmanager.task_workflow_system.dto.response.UserResponseDTO;
 import com.mohan.taskmanager.task_workflow_system.model.User;
 import com.mohan.taskmanager.task_workflow_system.service.interfaces.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,18 +25,15 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers(){
-        List<User> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
+    public ResponseEntity<?> getAllUsers(){
+        List<UserResponseDTO> users = userService.getAllUsers();
+        return ResponseEntity.ok(new APIResponse<>(200, "Users fetched successfully", users));
     }
 
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody Map<String, String> request) {
-        String userId = request.get("userId");
-        String name = request.get("name");
-        String email = request.get("email");
-        User user = userService.createUser(userId, name, email);
-        return ResponseEntity.status(201).body(user);
+    public ResponseEntity<?> createUser(@Valid @RequestBody UserRequestDTO dto) {
+        UserResponseDTO user = userService.createUser(dto);
+        return ResponseEntity.status(201).body(new APIResponse<>(201, "User created successfully", user));
     }
 
 
