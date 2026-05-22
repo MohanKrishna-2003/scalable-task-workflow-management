@@ -16,7 +16,7 @@ public class TaskMapper {
     }
 
     public static TaskResponseDTO toDTO(Task task){
-        String assignedUserName = task.getAssignedUser() != null ? task.getAssignedUser().getName() : null;
+
         return new TaskResponseDTO(
                 task.getTaskId(),
                 task.getTitle(),
@@ -24,7 +24,7 @@ public class TaskMapper {
                 task.getPriority(),
                 task.getStatus(),
                 task.getDueDate(),
-                assignedUserName
+                task.getAssignedUser().getName()
         );
     }
 

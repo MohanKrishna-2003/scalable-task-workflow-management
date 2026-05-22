@@ -14,10 +14,12 @@ import com.mohan.taskmanager.task_workflow_system.model.User;
 import com.mohan.taskmanager.task_workflow_system.repository.TaskRepository;
 import com.mohan.taskmanager.task_workflow_system.service.interfaces.TaskService;
 import com.mohan.taskmanager.task_workflow_system.service.interfaces.UserService;
+import com.mohan.taskmanager.task_workflow_system.specification.TaskSpecification;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
@@ -105,19 +107,10 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public Page<TaskResponseDTO> getTasks(String userId, TaskStatus taskStatus, int page, int size, String sort){
-
         Sort sorting = parseSort(sort);
         Pageable pageable = PageRequest.of(page, size, sorting);
-        Page<Task> tasks;
-        if(userId != null && taskStatus != null){
-            tasks = taskRepository.findByAssignedUser_UserIdAndStatus(userId, taskStatus, pageable);
-        } else if(userId != null){
-            tasks = taskRepository.findByAssignedUser_UserId(userId, pageable);
-        } else if(taskStatus != null){
-            tasks = taskRepository.findByStatus(taskStatus, pageable);
-        } else {
-            tasks = taskRepository.findAll(pageable);
-        }
+        Specification<Task> specification = TaskSpecification.build(userId, taskStatus);
+        Page<Task> tasks = taskRepository.findAll(specification, pageable);
         return tasks.map(TaskMapper::toDTO);
     }
 
