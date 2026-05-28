@@ -11,6 +11,8 @@ public record TaskResponseDTO(
         String description,
         Priority priority,
         TaskStatus taskStatus,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
         LocalDateTime dueDate,
         String assignedUserName // or userId
 ){}

@@ -51,6 +51,10 @@ public class TaskServiceImpl implements TaskService {
         return TaskMapper.toDTO(saved);
     }
 
+    // see, we are using transactional here because:  @Transactional + Dirty Checking = automatic update in dB.
+//    Whenever you do:
+//    FETCH ENTITY → MODIFY ENTITY
+//    Use: @Transactional
     @Override
     @Transactional
     public void assignTask(UUID taskId, AssignTaskDTO userId){
@@ -70,6 +74,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @Transactional
     public void updatePriority(UUID taskId, Priority priority){
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException("Task not found with id " + taskId));
@@ -110,16 +115,25 @@ public class TaskServiceImpl implements TaskService {
         Sort sorting = parseSort(sort);
         Pageable pageable = PageRequest.of(page, size, sorting);
         Specification<Task> specification = TaskSpecification.build(userId, taskStatus);
+
+        // new way - using dto projection
+//        return taskRepository.findAllTasksDTO(specification, pageable);
+
+//         preferable way because we should not use Page with DTO projection.
         Page<Task> tasks = taskRepository.findAll(specification, pageable);
         return tasks.map(TaskMapper::toDTO);
     }
 
     @Override
+    @Transactional
     public void deleteTask(UUID taskId){
-        if(!taskRepository.existsById(taskId)){
-            throw new TaskNotFoundException("Task not found with id " + taskId);
-        }
-        taskRepository.deleteById(taskId);
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException("Task not found"));
+        // so here it is hard delete, we are deleting it permanently,
+//        taskRepository.deleteById(taskId);
+
+        // here we will use soft delete instead, by setting archived = true.
+        task.setArchived(true);
     }
 
 }

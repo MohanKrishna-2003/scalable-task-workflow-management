@@ -7,12 +7,23 @@ import com.mohan.taskmanager.task_workflow_system.exception.UserNotFoundExceptio
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "tasks")
+@Table(
+        name = "tasks",
+        indexes = {
+                @Index(name = "idx_task_status", columnList = "status"),
+                @Index(name = "idx_task_user", columnList = "user_id"),
+                @Index(name = "idx_task_created", columnList = "createdAt"),
+                @Index(name = "idx_user_status", columnList = "user_id, status") // this is called composite indexing
+
+        }
+    )
 @Data
 @NoArgsConstructor
 public class Task {
@@ -30,11 +41,15 @@ public class Task {
     @Enumerated(EnumType.STRING)
     private TaskStatus status = TaskStatus.TODO;
 
+    @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
     private LocalDateTime dueDate;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User assignedUser;
 
