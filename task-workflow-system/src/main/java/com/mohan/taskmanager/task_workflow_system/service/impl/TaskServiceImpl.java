@@ -1,9 +1,11 @@
 package com.mohan.taskmanager.task_workflow_system.service.impl;
 
+import com.mohan.taskmanager.task_workflow_system.config.security.SecurityUtils;
 import com.mohan.taskmanager.task_workflow_system.dto.request.AssignTaskDTO;
 import com.mohan.taskmanager.task_workflow_system.dto.request.TaskRequestDTO;
 import com.mohan.taskmanager.task_workflow_system.dto.request.UpdateStatusDTO;
 import com.mohan.taskmanager.task_workflow_system.dto.response.TaskResponseDTO;
+import com.mohan.taskmanager.task_workflow_system.events.TaskAssignedEvent;
 import com.mohan.taskmanager.task_workflow_system.exception.TaskNotFoundException;
 import com.mohan.taskmanager.task_workflow_system.exception.UserNotFoundException;
 import com.mohan.taskmanager.task_workflow_system.enums.Priority;
@@ -16,25 +18,35 @@ import com.mohan.taskmanager.task_workflow_system.service.interfaces.TaskService
 import com.mohan.taskmanager.task_workflow_system.service.interfaces.UserService;
 import com.mohan.taskmanager.task_workflow_system.specification.TaskSpecification;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDateTime;
 import java.util.*;
 
+@Slf4j
 @Service
 public class TaskServiceImpl implements TaskService {
 //    private Map<String, Task> taskStore = new HashMap<>();
 
     private TaskRepository taskRepository;
     private final UserService userService;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public TaskServiceImpl(UserService userService, TaskRepository taskRepository) {
+    public TaskServiceImpl(UserService userService, TaskRepository taskRepository, ApplicationEventPublisher eventPublisher) {
         this.userService = userService;
         this.taskRepository = taskRepository;
+        this.eventPublisher = eventPublisher;
     }
 
 
@@ -45,8 +57,15 @@ public class TaskServiceImpl implements TaskService {
         task.setCreatedAt(LocalDateTime.now());
         task.setArchived(false);
         task.setCreatedBy("system-user"); // later we can replace it with jwt.
-
+        log.info(
+                "Creating task title={}",
+                dto.getTitle()
+        );
         Task saved = taskRepository.save(task);
+        log.info(
+                "Task created taskId={}",
+                saved.getTaskId()
+        );
 
         return TaskMapper.toDTO(saved);
     }
@@ -60,8 +79,29 @@ public class TaskServiceImpl implements TaskService {
     public void assignTask(UUID taskId, AssignTaskDTO userId){
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException("Task not found with id " + taskId));
+
         User user = userService.getUserById(userId.getUserId());
+        log.info(
+                "Assigning task {} to user {}",
+                taskId,
+                user.getUserId()
+        );
         task.assignUser(user);
+
+        log.info(
+                "Publishing TaskAssignedEvent taskId={}",
+                taskId
+        );
+        // publish an event.
+        eventPublisher.publishEvent(
+                new TaskAssignedEvent(
+                        task.getTaskId(),
+                        user.getName(),
+                        user.getEmail(),
+                        task.getTitle(),
+                        task.getDescription()
+                ));
+
     }
 
     @Override
@@ -70,6 +110,41 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException("Task not found with id " + taskId));
 
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        boolean isAdmin = authentication.getAuthorities()
+                        .stream()
+                                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        String email = authentication.getName();
+
+        boolean isOwner = task.getAssignedUser() != null && task.getAssignedUser().getEmail().equals(email);
+
+        TaskStatus current = task.getStatus();
+        TaskStatus requested = statusDTO.getTaskStatus();
+        log.info(
+                "Updating task status taskId={} from={} to={}",
+                taskId,
+                current,
+                requested
+        );
+        // now, USER can only move TODO -> IN_PROGRESS
+        if(!isAdmin){
+            if(!isOwner){
+                log.warn(
+                        "Unauthorized task update attempt by {}",
+                        email
+                );
+                throw new AccessDeniedException("You can update only your tasks");
+            }
+
+            if(!(current == TaskStatus.TODO && requested == TaskStatus.IN_PROGRESS)){
+                throw new AccessDeniedException("User can only move TODO to IN_PROGRESS");
+            }
+        }
+
+        // or else admin can do everything.
         task.updateNewStatus(statusDTO.getTaskStatus());
     }
 
@@ -111,10 +186,14 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public Page<TaskResponseDTO> getTasks(String userId, TaskStatus taskStatus, int page, int size, String sort){
+    public Page<TaskResponseDTO> getTasks(TaskStatus taskStatus, int page, int size, String sort){
+
+        String email = SecurityUtils.getCurrentUserEmail();
+
         Sort sorting = parseSort(sort);
+
         Pageable pageable = PageRequest.of(page, size, sorting);
-        Specification<Task> specification = TaskSpecification.build(userId, taskStatus);
+        Specification<Task> specification = TaskSpecification.build(email, taskStatus);
 
         // new way - using dto projection
 //        return taskRepository.findAllTasksDTO(specification, pageable);
@@ -129,6 +208,10 @@ public class TaskServiceImpl implements TaskService {
     public void deleteTask(UUID taskId){
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException("Task not found"));
+        log.warn(
+                "Soft deleting task {}",
+                taskId
+        );
         // so here it is hard delete, we are deleting it permanently,
 //        taskRepository.deleteById(taskId);
 

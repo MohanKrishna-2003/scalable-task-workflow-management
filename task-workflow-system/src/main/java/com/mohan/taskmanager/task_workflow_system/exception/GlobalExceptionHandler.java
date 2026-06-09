@@ -2,6 +2,7 @@ package com.mohan.taskmanager.task_workflow_system.exception;
 
 import com.mohan.taskmanager.task_workflow_system.dto.response.APIResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -22,6 +23,10 @@ public class GlobalExceptionHandler {
     //handling the error for task not found.
     @ExceptionHandler(TaskNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleTaskException(TaskNotFoundException ex){
+        log.warn(
+                "Task not found: {}",
+                ex.getMessage()
+        );
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(
@@ -35,6 +40,10 @@ public class GlobalExceptionHandler {
     //handling the error for user not found.
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleUserException(UserNotFoundException ex){
+        log.warn(
+                "User not found: {}",
+                ex.getMessage()
+        );
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(
@@ -48,8 +57,20 @@ public class GlobalExceptionHandler {
     //fall back
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
-        ex.printStackTrace();
-        log.error("Exception occurred, " + ex);
+        log.error("Unhandled exception occurred", ex);
+
+        if (ex instanceof org.springframework.security.authorization.AuthorizationDeniedException) {
+            log.warn(
+                    "Access denied to protected resource"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ErrorResponse(
+                            403,
+                            "Access Denied",
+                            LocalDateTime.now(),
+                            null
+                    ));
+        }
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -64,6 +85,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(HttpMessageNotReadableException ex){
+        log.warn(
+                "Validation failed: {}",
+                ex.getMessage()
+        );
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(
@@ -105,6 +130,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<APIResponse<Void>> handleTypeMismatch(
             MethodArgumentTypeMismatchException ex) {
+        log.warn(
+                "Invalid value '{}' supplied for parameter '{}'",
+                ex.getValue(),
+                ex.getName()
+        );
 
         String message = "Invalid value '" + ex.getValue() + "' for parameter '"
                 + ex.getName() + "'. Expected type: " + ex.getRequiredType().getSimpleName();
@@ -120,15 +150,44 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
-
-        log.error("Bad request: {}", ex.getMessage());
-
+        log.warn(
+                "Illegal argument: {}",
+                ex.getMessage()
+        );
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(
                         400,
                         ex.getMessage(),
                         LocalDateTime.now(),
+                        null
+                ));
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<APIResponse<?>> handleUserExists(UserAlreadyExistsException ex) {
+        log.warn(
+                "User registration failed: {}",
+                ex.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new APIResponse<>(
+                        409,
+                        ex.getMessage(),
+                        null
+                ));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<APIResponse<?>> handleDuplicateKey(DataIntegrityViolationException ex) {
+        log.warn(
+                "Duplicate data violation detected: {}",
+                ex.getMostSpecificCause().getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new APIResponse<>(
+                        409,
+                        "Duplicate entry detected (email must be unique)",
                         null
                 ));
     }

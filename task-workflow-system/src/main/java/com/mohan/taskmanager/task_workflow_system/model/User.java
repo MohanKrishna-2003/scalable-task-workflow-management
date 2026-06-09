@@ -1,25 +1,32 @@
 package com.mohan.taskmanager.task_workflow_system.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.mohan.taskmanager.task_workflow_system.enums.Role;
+import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        indexes = {
+                @Index(name = "idx_user_email", columnList = "email")
+        }
+)
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class User {
     @Id
     @Column(unique = true)
-    private String userId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID userId;
 
+    // name = username
     private String name;
 
     @Column(unique = true)
@@ -27,7 +34,8 @@ public class User {
 
     private String password;
 
-    private String role;
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
     private boolean active;
 

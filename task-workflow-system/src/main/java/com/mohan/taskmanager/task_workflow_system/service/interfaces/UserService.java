@@ -6,6 +6,7 @@ import com.mohan.taskmanager.task_workflow_system.dto.response.UserResponseDTO;
 import com.mohan.taskmanager.task_workflow_system.model.User;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface UserService {
 
@@ -16,7 +17,7 @@ public interface UserService {
     List<UserResponseDTO> getAllUsers();
 
     // get user by id
-    User getUserById(String userId);
+    User getUserById(UUID userId);
 
 
 

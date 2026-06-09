@@ -25,7 +25,7 @@ public interface TaskService {
 
     void updatePriority(UUID taskId, Priority priority);
 
-    Page<TaskResponseDTO> getTasks(String userId, TaskStatus taskStatus, int page, int size, String sort);
+    Page<TaskResponseDTO> getTasks(TaskStatus taskStatus, int page, int size, String sort);
 
 //    List<TaskResponseDTO> getAllTasks();
 

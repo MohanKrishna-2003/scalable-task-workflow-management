@@ -6,17 +6,22 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 
 @Data
+@Schema(description = "Request payload for creating a task")
 public class TaskRequestDTO {
-    @NotBlank(message = "Title cannot be empty")
+
+    @Schema(description = "Title of task", example = "Fix login bug")
     private String title;
 
-    @NotBlank(message = "Description cannot be empty")
+    @Schema(description = "Detailed description", example = "Fix JWT authentication issue")
     private String description;
 
-    @NotNull(message = "Priority is required")
+    @Schema(description = "Task priority")
     private Priority priority;
 
+    @Schema(description = "Due date of task")
     private LocalDateTime dueDate;
 }
