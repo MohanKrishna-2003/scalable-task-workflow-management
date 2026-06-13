@@ -22,18 +22,6 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
 
     @Bean
-    public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory(
-                (RedisConfiguration) RedisURI.create(System.getenv("REDIS_URL"))
-        );
-    }
-
-    @Bean
-    public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory factory) {
-        return new StringRedisTemplate(factory);
-    }
-
-    @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory factory) {
 
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
