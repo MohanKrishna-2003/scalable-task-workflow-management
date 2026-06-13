@@ -19,6 +19,8 @@ import com.mohan.taskmanager.task_workflow_system.service.interfaces.UserService
 import com.mohan.taskmanager.task_workflow_system.specification.TaskSpecification;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,7 +39,6 @@ import java.util.*;
 @Slf4j
 @Service
 public class TaskServiceImpl implements TaskService {
-//    private Map<String, Task> taskStore = new HashMap<>();
 
     private TaskRepository taskRepository;
     private final UserService userService;
@@ -48,7 +49,6 @@ public class TaskServiceImpl implements TaskService {
         this.taskRepository = taskRepository;
         this.eventPublisher = eventPublisher;
     }
-
 
     @Override
     public TaskResponseDTO createTask(TaskRequestDTO dto){
@@ -103,6 +103,7 @@ public class TaskServiceImpl implements TaskService {
                 ));
 
     }
+
 
     @Override
     @Transactional
@@ -202,6 +203,7 @@ public class TaskServiceImpl implements TaskService {
         Page<Task> tasks = taskRepository.findAll(specification, pageable);
         return tasks.map(TaskMapper::toDTO);
     }
+
 
     @Override
     @Transactional

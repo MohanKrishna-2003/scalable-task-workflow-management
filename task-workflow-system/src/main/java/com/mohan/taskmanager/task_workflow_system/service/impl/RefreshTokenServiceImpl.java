@@ -1,79 +1,62 @@
 package com.mohan.taskmanager.task_workflow_system.service.impl;
 
-import com.mohan.taskmanager.task_workflow_system.model.RefreshToken;
-import com.mohan.taskmanager.task_workflow_system.repository.RefreshTokenRepository;
+import com.mohan.taskmanager.task_workflow_system.config.security.JwtProperties;
 import com.mohan.taskmanager.task_workflow_system.service.interfaces.RefreshTokenService;
+import com.mohan.taskmanager.task_workflow_system.service.redis.RedisRefreshTokenService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
 
-    @Value("${jwt.refresh_expiration}")
-    private long refreshExpiration;
+    private final JwtProperties jwtProperties;
 
-    private RefreshTokenRepository refreshTokenRepository;
+    private final RedisRefreshTokenService redisService;
 
-    public RefreshTokenServiceImpl(RefreshTokenRepository refreshTokenRepository) {
-        this.refreshTokenRepository = refreshTokenRepository;
+    public RefreshTokenServiceImpl(JwtProperties jwtProperties, RedisRefreshTokenService redisService) {
+        this.jwtProperties = jwtProperties;
+        this.redisService = redisService;
     }
 
     @Override
-    public RefreshToken createRefreshToken(String userId) {
+    public String createRefreshToken(String userId) {
 
         String token = UUID.randomUUID().toString();
-        RefreshToken refreshToken = new RefreshToken(
-                token,
-                userId,
-                LocalDateTime.now().plusSeconds(refreshExpiration/1000),
-                false
-        );
         log.info(
                 "Creating refresh token for userId={}",
                 userId
         );
-        return refreshTokenRepository.save(refreshToken);
+        long expirySeconds = TimeUnit.MILLISECONDS.toSeconds(jwtProperties.refreshExpiration());
+
+        redisService.save(token, userId, expirySeconds);
+
+        return token;
+
     }
 
     @Override
-    public RefreshToken validateRefreshToken(String token) {
+    public String validateRefreshToken(String token) {
 
-        RefreshToken refreshToken = refreshTokenRepository
-                .findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+        String userId = redisService.getUserIdByToken(token);
 
-        if(refreshToken.isRevoked()){
-            log.info(
-                    "Refresh token revoked"
-            );
-            throw new RuntimeException("Refresh token is revoked");
+        if (userId == null) {
+            throw new RuntimeException("Invalid or expired refresh token");
         }
 
-        if(refreshToken.getExpiryDate().isBefore(LocalDateTime.now())){
-            log.warn(
-                    "Expired refresh token used"
-            );
-            throw new RuntimeException("Refresh token is expired");
-        }
+        log.info("Refresh token validated");
 
-        return refreshToken;
+        return userId;
     }
 
     @Override
     public void revokeRefreshToken(String token) {
-        RefreshToken refreshToken = refreshTokenRepository
-                .findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
-
-        refreshToken.setRevoked(true);
-        refreshTokenRepository.save(refreshToken);
+        log.info("Revoking refresh token");
+        redisService.delete(token);
     }
 
 

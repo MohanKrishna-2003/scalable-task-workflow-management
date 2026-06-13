@@ -11,6 +11,8 @@ import com.mohan.taskmanager.task_workflow_system.model.User;
 import com.mohan.taskmanager.task_workflow_system.repository.UserRepository;
 import com.mohan.taskmanager.task_workflow_system.service.interfaces.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,6 +34,7 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    @CacheEvict(value = "users", allEntries = true)
     @Override
     public UserResponseDTO createUser(UserRequestDTO dto){
 
@@ -57,14 +60,17 @@ public class UserServiceImpl implements UserService {
         return UserMapper.toDTO(user);
     }
 
+    @Cacheable(value = "users", key = "'all'")
     @Override
     public List<UserResponseDTO> getAllUsers(){
+        log.info("DB CALLED");
         return userRepository.findAll()
                 .stream()
                 .map(UserMapper::toDTO)
                 .toList();
     }
 
+    @Cacheable(value = "users:byId", key = "#userId")
     @Override
     public User getUserById(UUID userId){
         log.debug(

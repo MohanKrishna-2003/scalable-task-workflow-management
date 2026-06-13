@@ -2,10 +2,12 @@ package com.mohan.taskmanager.task_workflow_system.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.UUID;
 
 @Getter
+@Setter
 @Schema(description = "Assign task to a user")
 public class AssignTaskDTO {
 

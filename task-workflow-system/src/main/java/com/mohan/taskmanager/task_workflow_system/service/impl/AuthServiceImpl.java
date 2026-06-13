@@ -3,7 +3,8 @@ package com.mohan.taskmanager.task_workflow_system.service.impl;
 import com.mohan.taskmanager.task_workflow_system.config.security.JwtService;
 import com.mohan.taskmanager.task_workflow_system.dto.response.LoginResponseDTO;
 import com.mohan.taskmanager.task_workflow_system.dto.response.RefreshTokenResponseDTO;
-import com.mohan.taskmanager.task_workflow_system.model.RefreshToken;
+import com.mohan.taskmanager.task_workflow_system.exception.InvalidCredentialsException;
+import com.mohan.taskmanager.task_workflow_system.exception.UserNotFoundException;
 import com.mohan.taskmanager.task_workflow_system.model.User;
 import com.mohan.taskmanager.task_workflow_system.repository.UserRepository;
 import com.mohan.taskmanager.task_workflow_system.service.interfaces.AuthService;
@@ -32,7 +33,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponseDTO login(String email, String password){
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 
         if(!passwordEncoder.matches(password, user.getPassword())){
             log.warn(
@@ -46,23 +47,23 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtService.generateToken(user);
 
         // 2. Generate Refresh Token
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(String.valueOf(user.getUserId()));
+        String refreshToken = refreshTokenService.createRefreshToken(String.valueOf(user.getUserId()));
 
         log.info(
                 "User authenticated successfully email={}",
                 email
         );
-        return new LoginResponseDTO(accessToken, refreshToken.getToken());
+        return new LoginResponseDTO(accessToken, refreshToken);
     }
 
     @Override
     public RefreshTokenResponseDTO refreshToken(String token){
 
         // 1. validate the refresh token
-        RefreshToken oldRefreshToken = refreshTokenService.validateRefreshToken(token);
+        String oldRefreshToken = refreshTokenService.validateRefreshToken(token);
 
         // 2. Find user
-        User user = userRepository.findById(UUID.fromString(oldRefreshToken.getUserId()))
+        User user = userRepository.findById(UUID.fromString(oldRefreshToken))
                 .orElseThrow(() ->
                         new RuntimeException("User not found")
                 );
@@ -71,7 +72,7 @@ public class AuthServiceImpl implements AuthService {
         String newAccessToken = jwtService.generateToken(user);
 
         // 4. Generate NEW refresh token (ROTATION)
-        RefreshToken newRefreshToken =
+        String newRefreshToken =
                 refreshTokenService.createRefreshToken(String.valueOf(user.getUserId()));
 
         // 5. Revoke OLD refresh token
@@ -84,7 +85,7 @@ public class AuthServiceImpl implements AuthService {
         // 6. Return new tokens
         return new RefreshTokenResponseDTO(
                 newAccessToken,
-                newRefreshToken.getToken()
+                newRefreshToken
         );
 
     }
